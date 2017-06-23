@@ -1,6 +1,7 @@
 package com.justice.clean.goldcam;
 
 import android.Manifest;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
 import android.os.Build;
@@ -13,6 +14,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -27,6 +29,7 @@ public class MainActivity extends AppCompatActivity {
     private SurfaceHolder sh;
     private TextView tw;
     private Spinner sp;
+    private Button ocbt;
     private List<Camera.Size> mPicSizes;
     private boolean mIsRecordingVideo;
     private boolean mIsOpened = false;
@@ -49,9 +52,13 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        //setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_NOSENSOR);
         sfv = (SurfaceView)findViewById(R.id.surfaceView);
         tw = (TextView) findViewById(R.id.text);
         sp = (Spinner) findViewById(R.id.spinner);
+        ocbt = (Button) findViewById(R.id.button);
+        ocbt.setText("Open");
     }
 
     private boolean hasPermissionsGranted(String[] permissions){
@@ -98,12 +105,14 @@ public class MainActivity extends AppCompatActivity {
         if(mIsOpened){
             stopOldPreview();
             closeOldCamera();
+            ocbt.setText("Open");
         }
         else{
             if(!checkpm())
                 return;
             openOldCamera();
             startOldPreview();
+            ocbt.setText("Close");
         }
 
     }
