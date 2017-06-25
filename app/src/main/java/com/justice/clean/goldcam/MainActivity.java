@@ -20,6 +20,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -45,8 +46,12 @@ public class MainActivity extends AppCompatActivity {
     private EditText filename;
     private EditText et;
     private EditText max_ct;
+    private LinearLayout ll1;
+    private LinearLayout ll2;
     private List<Camera.Size> mPicSizes;
+    private List<Camera.Size> mPreSizes;
     private Camera.Size mPreSize;
+    private Camera.Size mPicSize;
     private boolean mIsRecordingVideo;
     private boolean mIsOpened = false;
     private boolean mIsPreviewing = false;
@@ -69,6 +74,10 @@ public class MainActivity extends AppCompatActivity {
     private Timer mTmr;
 
     private String mTWstring;
+    private int org_sur_w;
+    private int org_sur_h;
+    private int pre_w;
+    private int pre_h;
 
     private static final String[] NEEDED_PERMISSIONS = {
             Manifest.permission.CAMERA,
@@ -95,6 +104,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         //setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_NOSENSOR);
+        ll1 = (LinearLayout)findViewById(R.id.ll1);
+        ll2 = (LinearLayout)findViewById(R.id.ll2);
         sfv = (SurfaceView)findViewById(R.id.surfaceView);
         tw = (TextView) findViewById(R.id.text);
         sp = (Spinner) findViewById(R.id.spinner);
@@ -265,7 +276,8 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
             mylog("surfacecreated mIsopened " + mIsOpened);
-
+            org_sur_w = sfv.getWidth();
+            org_sur_h = sfv.getHeight();
         }
 
         @Override
@@ -287,16 +299,76 @@ public class MainActivity extends AppCompatActivity {
     };
 
     private void adjust_sur(){
-        mylog("preview size is w "  + mPreSize.width + " h "+ mPreSize.height);
+        final double ASPECT_TOLERANCE = 0.1;
+        double targetRatio = (double) mPicSize.width / mPicSize.height;
+        int av_w, av_h;
+        mylog("mPicSize.width / mPicSize.height " + mPicSize.width + " " + mPicSize.height);
+        mylog("original surface w x h is " + org_sur_w + " x " + org_sur_h);
+        //mylog("preview size is w "  + mPreSize.width + " h "+ mPreSize.height);
         mylog("sur size is w "  + sfv.getWidth() + " h "+ sfv.getHeight());
         mylog("sur r " + sfv.getRight() + " l "+ sfv.getLeft() +
         " b "+ sfv.getBottom() + " t " + sfv.getTop());
+
+        av_w = org_sur_w;
+        av_h = org_sur_h - ll1.getHeight() - ll2.getHeight();
         //sfv.setRight(sfv.getLeft()+mPreSize.height);
         //sfv.setBottom(sfv.getTop()+mPreSize.width);
-        mylog("sur r " + sfv.getRight() + " l "+ sfv.getLeft() +
-                " b "+ sfv.getBottom() + " t " + sfv.getTop());
-        sfv.setLayoutParams(new FrameLayout.LayoutParams(480, 640));//
+        Camera.Size optimalSize = mPreSizes.get(0);
+        double lessratio = (double)optimalSize.width/optimalSize.height -targetRatio;
+        for (Camera.Size trysize : mPreSizes) {
+            mylog("for : try w x h " + trysize.width + " x " + trysize.height);
+            //if(trysize.width > av_w || trysize.height > av_h) continue;
+            double ratio = (double) trysize.width / trysize.height;
+            if (Math.abs(ratio - targetRatio) < lessratio){
+                mylog("lessratio " + lessratio);
+                lessratio = Math.abs(ratio - targetRatio);
+                optimalSize = trysize;
+            }
+        }
+        mylog("final pre size w x h " + optimalSize.width + " x " + optimalSize.height);
+        if(optimalSize.height * av_w /optimalSize.width < av_h){
+            sfv.setLayoutParams(new FrameLayout.LayoutParams(optimalSize.height * av_w /optimalSize.width, av_w));
+        }
+        else {
+            sfv.setLayoutParams(new FrameLayout.LayoutParams(av_h, optimalSize.width * av_h / optimalSize.height));
+        }
+        mPreSize = optimalSize;
     }
+
+    /*
+        private Camera.Size getOptimalPreviewSize(List<Camera.Size> sizes, int w, int h) {
+        final double ASPECT_TOLERANCE = 0.1;
+        double targetRatio = (double) w / h;
+        if (sizes == null) return null;
+
+        Camera.Size optimalSize = null;
+        double minDiff = Double.MAX_VALUE;
+
+        int targetHeight = h;
+
+        // Try to find an size match aspect ratio and size
+        for (Camera.Size size : sizes) {
+            double ratio = (double) size.width / size.height;
+            if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE) continue;
+            if (Math.abs(size.height - targetHeight) < minDiff) {
+                optimalSize = size;
+                minDiff = Math.abs(size.height - targetHeight);
+            }
+        }
+
+        // Cannot find the one match the aspect ratio, ignore the requirement
+        if (optimalSize == null) {
+            minDiff = Double.MAX_VALUE;
+            for (Camera.Size size : sizes) {
+                if (Math.abs(size.height - targetHeight) < minDiff) {
+                    optimalSize = size;
+                    minDiff = Math.abs(size.height - targetHeight);
+                }
+            }
+        }
+        return optimalSize;
+    }
+    */
 
     private void restart_cam(){
         if(mIsOpened) {
@@ -386,6 +458,7 @@ public class MainActivity extends AppCompatActivity {
 
         Camera.Parameters p = oldcam.getParameters();
         mPicSizes = p.getSupportedPictureSizes();
+        mPreSizes = p.getSupportedPreviewSizes();
 
         PicSizesString = new String[mPicSizes.size()];
         int i = 0;
@@ -419,19 +492,20 @@ public class MainActivity extends AppCompatActivity {
             oldcam.setDisplayOrientation(90);
             Camera.Parameters p = oldcam.getParameters();
             mPicSizes = p.getSupportedPictureSizes();
-            p.setPreviewSize(640,480);
-            oldcam.setParameters(p);
-            p = oldcam.getParameters();
-            mPreSize = p.getPreviewSize();
+            onset(true);
             adjust_sur();
+            p.setPreviewSize(mPreSize.width, mPreSize.height);
+            oldcam.setParameters(p);
             oldcam.startPreview();
             set_cam_hint(tw.getText().toString()+"\nold camera preview started");
+            p = oldcam.getParameters();
+            p.setPictureSize(mPicSize.width, mPicSize.height);
+            oldcam.setParameters(p);
             mIsPreviewing = true;
             //sfv.setBottom(sfv.getTop()+sfv.getWidth()*4/3);
             //sfv.setTop(300);
             oldcam.autoFocus(myAutoFocusCallback);
 
-            onset(true);
         }catch (IOException e){
             oldcam.release();
             oldcam=null;
@@ -482,6 +556,7 @@ public class MainActivity extends AppCompatActivity {
             mylog("orignal size is " + tmpSz.width + "x" + tmpSz.height);
             P.setPictureSize(mPicSizes.get(index).width, mPicSizes.get(index).height);
             Camera.Size tmpSz2 = P.getPictureSize();
+            mPicSize = tmpSz2;
             mylog("current size is " + tmpSz2.width + "x" + tmpSz2.height);
             oldcam.setParameters(P);
             set_cam_hint(tw.getText().toString() + "\nsize change from " + tmpSz.width + "x" + tmpSz.height
