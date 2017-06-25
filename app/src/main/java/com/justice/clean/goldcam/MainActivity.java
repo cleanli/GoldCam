@@ -4,7 +4,10 @@ import android.Manifest;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
+import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -15,10 +18,13 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
 
@@ -33,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView tw;
     private Spinner sp;
     private Button ocbt;
+    private EditText filename;
     private List<Camera.Size> mPicSizes;
     private Camera.Size mPreSize;
     private boolean mIsRecordingVideo;
@@ -42,12 +49,28 @@ public class MainActivity extends AppCompatActivity {
     private String PicSizesString[];
 
     private int camID = 0;
+    private int pic_cut_index = 0;
+    private boolean IsExtraMode = false;
+    private String ExtraFilePath = null;
+    private File mFile, gFile;
+    private String globleFilename;
+    private int piccount = 0;
+
+    private String mTWstring;
 
     private static final String[] NEEDED_PERMISSIONS = {
             Manifest.permission.CAMERA,
             Manifest.permission.RECORD_AUDIO,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
+
+    private Handler mHder = new Handler(){
+        @Override
+        public void handleMessage(Message msg){
+            set_cam_hint(mTWstring);
+        }
+    };
+
 
     private void mylog(String l){
         Log.i(TAG, "|||||||||||||||||||||||||||||||||||||||||||");
@@ -68,6 +91,16 @@ public class MainActivity extends AppCompatActivity {
         sh = sfv.getHolder();
         //sh.setFixedSize(480,640);
         sh.addCallback(shCB);
+
+        filename = (EditText) findViewById(R.id.name);
+        mFile = new File(this.getExternalFilesDir(null), "pic.jpg");
+        gFile = this.getExternalFilesDir(null);
+
+        ExtraFilePath = super.getIntent().getStringExtra("filepath");
+        if(ExtraFilePath != null) {
+            IsExtraMode = true;
+        }
+
     }
 
     private boolean hasPermissionsGranted(String[] permissions){
@@ -135,6 +168,10 @@ public class MainActivity extends AppCompatActivity {
         if(oldcam != null && mIsPreviewing){
             oldcam.autoFocus(myAutoFocusCallback);
         }
+    }
+
+    public void onTriggerClk(View v){
+        take_pic();
     }
 
     public void onButClk(View v){
@@ -217,6 +254,62 @@ public class MainActivity extends AppCompatActivity {
             startOldPreview();
             ocbt.setText("Close");
         }
+    }
+
+    void updateHint(String sc){
+        mTWstring = sc;
+        mHder.sendMessage(new Message());
+    }
+
+
+    class SavePictureTask extends AsyncTask<byte[], String, String> {
+        @Override
+        protected String doInBackground(byte[]...params){
+            try{
+                if(IsExtraMode) {
+                    mFile = new File(ExtraFilePath);
+                    FileOutputStream fos = new FileOutputStream(mFile.getPath());
+                    fos.write(params[0]);
+                    fos.close();
+                    oldcam.stopPreview();
+                    oldcam.release();
+                    setResult(RESULT_OK, getIntent());
+                    IsExtraMode = false;
+                    finish();
+                }
+                mFile = new File(gFile, globleFilename + piccount + ".jpg");
+                FileOutputStream fos = new FileOutputStream(mFile.getPath());
+                fos.write(params[0]);
+                fos.close();
+                mylog(gFile.getPath());
+
+                updateHint("Saved picture:" + mFile);
+                piccount++;
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            return null;
+        }
+    }
+
+
+    Camera.PictureCallback picOldCB = new Camera.PictureCallback(){
+        //@Override
+        public void onPictureTaken(byte[] data, Camera cam){
+            new SavePictureTask().execute(data);
+            oldcam.startPreview();
+        }
+    };
+
+    Camera.ShutterCallback shutCB = new Camera.ShutterCallback(){
+        public void onShutter(){
+            set_cam_hint("Shutter received ============================");
+        }
+
+    };
+
+    private void take_pic(){
+        oldcam.takePicture(shutCB, null, picOldCB);
     }
 
     private void openOldCamera(){

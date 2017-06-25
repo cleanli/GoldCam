@@ -38,6 +38,7 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:onClick="on_hint_clk"
+        android:paddingLeft="8dp"
         android:text="Hello World!"
         android:textColor="@android:color/holo_orange_light"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -93,7 +94,7 @@
             android:layout_marginStart="8dp"
             android:layout_marginTop="8dp"
             android:layout_weight="1"
-            android:onClick="onButClk"
+            android:onClick="onTriggerClk"
             android:padding="2dp"
             android:text="Pic"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -162,10 +163,19 @@
         app:layout_constraintVertical_bias="1.0">
 
         <EditText
-            android:id="@+id/editText"
+            android:id="@+id/name"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:ems="10"
+            android:hint="name"
+            android:inputType="textPersonName" />
+
+        <EditText
+            android:id="@+id/editText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.8"
             android:ems="10"
             android:hint="inter"
             android:inputType="number" />
@@ -174,7 +184,7 @@
             android:id="@+id/editText2"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_weight="0.8"
             android:ems="10"
             android:hint="max"
             android:inputType="number" />
@@ -189,7 +199,7 @@
             android:layout_marginRight="4dp"
             android:layout_marginStart="4dp"
             android:layout_marginTop="4dp"
-            android:layout_weight="1.5"
+            android:layout_weight="1.4"
             android:elevation="3dp"
             app:layout_constraintBottom_toBottomOf="@+id/parent"
             app:layout_constraintHorizontal_bias="1.0"
