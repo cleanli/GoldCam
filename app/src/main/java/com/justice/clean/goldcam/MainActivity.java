@@ -15,11 +15,14 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
 import java.io.IOException;
 import java.util.List;
+
+import static android.support.v7.appcompat.R.attr.height;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -31,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
     private Spinner sp;
     private Button ocbt;
     private List<Camera.Size> mPicSizes;
+    private Camera.Size mPreSize;
     private boolean mIsRecordingVideo;
     private boolean mIsOpened = false;
     private boolean mIsPreviewing = false;
@@ -59,6 +63,9 @@ public class MainActivity extends AppCompatActivity {
         sp = (Spinner) findViewById(R.id.spinner);
         ocbt = (Button) findViewById(R.id.button);
         ocbt.setText("Open");
+        sh = sfv.getHolder();
+        //sh.setFixedSize(480,640);
+        sh.addCallback(shCB);
     }
 
     private boolean hasPermissionsGranted(String[] permissions){
@@ -120,7 +127,14 @@ public class MainActivity extends AppCompatActivity {
     private SurfaceHolder.Callback shCB = new SurfaceHolder.Callback() {
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
-
+            mylog("surfacecreated mIsopened " + mIsOpened);
+            if(!mIsOpened) {
+                if (!checkpm())
+                    return;
+                openOldCamera();
+                startOldPreview();
+                ocbt.setText("Close");
+            }
         }
 
         @Override
@@ -130,16 +144,31 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void surfaceDestroyed(SurfaceHolder holder) {
-
+            mylog("surfacedestroyed mIsopened " + mIsOpened);
+            if(mIsOpened) {
+                stopOldPreview();
+                closeOldCamera();
+                ocbt.setText("Open");
+            }
         }
     };
+
+    private void adjust_sur(){
+        mylog("preview size is w "  + mPreSize.width + " h "+ mPreSize.height);
+        mylog("sur size is w "  + sfv.getWidth() + " h "+ sfv.getHeight());
+        mylog("sur r " + sfv.getRight() + " l "+ sfv.getLeft() +
+        " b "+ sfv.getBottom() + " t " + sfv.getTop());
+        //sfv.setRight(sfv.getLeft()+mPreSize.height);
+        //sfv.setBottom(sfv.getTop()+mPreSize.width);
+        mylog("sur r " + sfv.getRight() + " l "+ sfv.getLeft() +
+                " b "+ sfv.getBottom() + " t " + sfv.getTop());
+        sfv.setLayoutParams(new FrameLayout.LayoutParams(480, 640));//
+    }
 
 
     private void openOldCamera(){
         int camID = 0;
-        sh = sfv.getHolder();
-        //sh.setFixedSize(480,640);
-        sh.addCallback(shCB);
+
         sh.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         if(Camera.getNumberOfCameras()>1){
             camID = 0;
@@ -151,6 +180,7 @@ public class MainActivity extends AppCompatActivity {
 
         Camera.Parameters p = oldcam.getParameters();
         mPicSizes = p.getSupportedPictureSizes();
+
         PicSizesString = new String[mPicSizes.size()];
         int i = 0;
         for(Camera.Size tsz:mPicSizes){
@@ -161,6 +191,7 @@ public class MainActivity extends AppCompatActivity {
         tmpAd.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         sp.setAdapter(tmpAd);
 
+        /*
         int rt4_3_h = sfv.getWidth()/3*4;
         if(rt4_3_h > sfv.getHeight()){
             int tmp = sfv.getHeight()/4*3;
@@ -170,6 +201,8 @@ public class MainActivity extends AppCompatActivity {
         else{
             tw.setText("\nno need to adjust view");
         }
+        */
+
     }
     private void startOldPreview(){
         try{
@@ -179,10 +212,13 @@ public class MainActivity extends AppCompatActivity {
             mPicSizes = p.getSupportedPictureSizes();
             p.setPreviewSize(640,480);
             oldcam.setParameters(p);
+            p = oldcam.getParameters();
+            mPreSize = p.getPreviewSize();
+            adjust_sur();
             oldcam.startPreview();
             tw.setText(tw.getText().toString()+"\nold camera preview started");
             mIsPreviewing = true;
-            sfv.setBottom(sfv.getTop()+sfv.getWidth()*4/3);
+            //sfv.setBottom(sfv.getTop()+sfv.getWidth()*4/3);
             //sfv.setTop(300);
         }catch (IOException e){
             oldcam.release();
