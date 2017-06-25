@@ -41,8 +41,10 @@ public class MainActivity extends AppCompatActivity {
     private TextView tw;
     private Spinner sp;
     private Button ocbt;
+    private Button trigger;
     private EditText filename;
     private EditText et;
+    private EditText max_ct;
     private List<Camera.Size> mPicSizes;
     private Camera.Size mPreSize;
     private boolean mIsRecordingVideo;
@@ -57,6 +59,8 @@ public class MainActivity extends AppCompatActivity {
     private String ExtraFilePath = null;
     private File mFile, gFile;
     private String globleFilename;
+    private int max_piccount = 0;
+    private boolean delete_when_max = false;
     private int piccount = 0;
     private int last_index = 0;
     private int mTmrIntev = 0;
@@ -94,6 +98,7 @@ public class MainActivity extends AppCompatActivity {
         tw = (TextView) findViewById(R.id.text);
         sp = (Spinner) findViewById(R.id.spinner);
         ocbt = (Button) findViewById(R.id.button);
+        trigger = (Button) findViewById(R.id.trigger);
         ocbt.setText("Open");
         sh = sfv.getHolder();
         //sh.setFixedSize(480,640);
@@ -101,6 +106,7 @@ public class MainActivity extends AppCompatActivity {
 
         filename = (EditText) findViewById(R.id.name);
         et = (EditText) findViewById(R.id.interv);
+        max_ct = (EditText) findViewById(R.id.editText2);
         mFile = new File(this.getExternalFilesDir(null), "pic.jpg");
         gFile = this.getExternalFilesDir(null);
 
@@ -187,22 +193,35 @@ public class MainActivity extends AppCompatActivity {
         }
         if (mTmrIntev > 0) {
             if (!mTmrIsrunning) {
+
                 mylog("timer " + mTmrIntev);
                 mTmr=new Timer();
                 mTmr.scheduleAtFixedRate(new TimerTask() {
                     @Override
                     public void run() {
                         updateHint("timer triggering... ");
+                        if(piccount > max_piccount){
+                            if(delete_when_max){
+                                piccount = 0;
+                            }
+                            else{
+                                updateHint("get to max count, done of " + piccount);
+                                return;
+                            }
+
+                        }
                         mylog("from timer--------------------------------------------------");
                         take_pic();
                     }
                 }, 0, mTmrIntev * 1000);
                 mTmrIsrunning = true;
+                trigger.setText("PIC...");
                 set_cam_hint("timer is running @ " + mTmrIntev);
             } else {
                 mTmr.cancel();
                 set_cam_hint("timer canceled");
                 mTmrIsrunning = false;
+                trigger.setText("PIC");
             }
         } else {
             //runPrecaptureSequence();
@@ -436,6 +455,7 @@ public class MainActivity extends AppCompatActivity {
         if(b) {
             filename.setEnabled(false);
             et.setEnabled(false);
+            max_ct.setEnabled(false);
             globleFilename = filename.getText().toString();
             if(globleFilename == null || globleFilename.isEmpty()){
                 globleFilename = "default";
@@ -486,14 +506,29 @@ public class MainActivity extends AppCompatActivity {
             }
 
             if (et.getText().toString().isEmpty()) {
-                et.setText("0");
+                mTmrIntev = 0;
             }
-            mTmrIntev = Integer.parseInt(et.getText().toString());
-
+            else {
+                mTmrIntev = Integer.parseInt(et.getText().toString());
+            }
+            if (max_ct.getText().toString().isEmpty()) {
+                max_piccount = 99999999;
+            }
+            else {
+                max_piccount = Integer.parseInt(max_ct.getText().toString());
+            }
+            if(max_piccount < 0){
+                max_piccount = -max_piccount;
+                delete_when_max = true;
+            }
+            if(max_piccount == 0){
+                max_piccount = 99999999;
+            }
         }
         else{
             filename.setEnabled(true);
             et.setEnabled(true);
+            max_ct.setEnabled(true);
         }
 
     }
