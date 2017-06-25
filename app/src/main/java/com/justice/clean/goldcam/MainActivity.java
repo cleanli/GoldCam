@@ -27,6 +27,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import static android.support.v7.appcompat.R.attr.height;
 
@@ -40,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
     private Spinner sp;
     private Button ocbt;
     private EditText filename;
+    private EditText et;
     private List<Camera.Size> mPicSizes;
     private Camera.Size mPreSize;
     private boolean mIsRecordingVideo;
@@ -56,6 +59,9 @@ public class MainActivity extends AppCompatActivity {
     private String globleFilename;
     private int piccount = 0;
     private int last_index = 0;
+    private int mTmrIntev = 0;
+    private boolean mTmrIsrunning = false;
+    private Timer mTmr;
 
     private String mTWstring;
 
@@ -94,6 +100,7 @@ public class MainActivity extends AppCompatActivity {
         sh.addCallback(shCB);
 
         filename = (EditText) findViewById(R.id.name);
+        et = (EditText) findViewById(R.id.interv);
         mFile = new File(this.getExternalFilesDir(null), "pic.jpg");
         gFile = this.getExternalFilesDir(null);
 
@@ -173,7 +180,34 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onTriggerClk(View v){
-        take_pic();
+        Log.d(TAG, "pic click button");
+        if(!mIsPreviewing){
+            set_cam_hint("open camera first");
+            return;
+        }
+        if (mTmrIntev > 0) {
+            if (!mTmrIsrunning) {
+                mylog("timer " + mTmrIntev);
+                mTmr=new Timer();
+                mTmr.scheduleAtFixedRate(new TimerTask() {
+                    @Override
+                    public void run() {
+                        updateHint("timer triggering... ");
+                        mylog("from timer--------------------------------------------------");
+                        take_pic();
+                    }
+                }, 0, mTmrIntev * 1000);
+                mTmrIsrunning = true;
+                set_cam_hint("timer is running @ " + mTmrIntev);
+            } else {
+                mTmr.cancel();
+                set_cam_hint("timer canceled");
+                mTmrIsrunning = false;
+            }
+        } else {
+            //runPrecaptureSequence();
+            take_pic();
+        }
     }
 
     public void onButClk(View v){
@@ -203,7 +237,7 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 mylog("focus callback, success = " + success);
             }
-            set_cam_hint("focus success = " + success);
+            set_cam_hint(tw.getText().toString() + "\nfocus success = " + success);
         }
     };
 
@@ -312,7 +346,10 @@ public class MainActivity extends AppCompatActivity {
     };
 
     private void take_pic(){
-        oldcam.takePicture(shutCB, null, picOldCB);
+        mylog("take pic in oldcam is "+oldcam);
+        if(oldcam != null) {
+            oldcam.takePicture(shutCB, null, picOldCB);
+        }
     }
 
     private void openOldCamera(){
@@ -378,6 +415,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     private void stopOldPreview(){
+        if(mTmrIsrunning){
+            mTmr.cancel();
+            set_cam_hint("timer canceled");
+            mTmrIsrunning = false;
+        }
         oldcam.stopPreview();
         set_cam_hint("old camera preview stopped");
         mIsPreviewing = false;
@@ -393,6 +435,7 @@ public class MainActivity extends AppCompatActivity {
     public void onset(boolean b){
         if(b) {
             filename.setEnabled(false);
+            et.setEnabled(false);
             globleFilename = filename.getText().toString();
             if(globleFilename == null || globleFilename.isEmpty()){
                 globleFilename = "default";
@@ -422,27 +465,45 @@ public class MainActivity extends AppCompatActivity {
             last_index = index;
 
             if (!gFile.getPath().equals(this.getExternalFilesDir(null) + "/" + filename.getText().toString())) {
-                if (!filename.getText().toString().isEmpty() && filename.getText().toString() != null) {
-                    File t_gFile = new File(this.getExternalFilesDir(null) + "/" + filename.getText().toString());
-                    if (!t_gFile.exists()) {
-                        t_gFile.mkdirs();
+                String tmp_str = filename.getText().toString();
+                if(tmp_str == null || tmp_str.isEmpty()){
+                    tmp_str = "default";
+                }
+                File t_gFile = new File(this.getExternalFilesDir(null) + "/" + tmp_str);
+                if (!t_gFile.exists()) {
+                    t_gFile.mkdirs();
+                    gFile = t_gFile;
+                    set_cam_hint(tw.getText().toString() + "\npath=" + gFile.getPath());
+                } else {
+                    if (t_gFile.isDirectory()) {
                         gFile = t_gFile;
                         set_cam_hint(tw.getText().toString() + "\npath=" + gFile.getPath());
                     } else {
-                        if (t_gFile.isDirectory()) {
-                            gFile = t_gFile;
-                            set_cam_hint(tw.getText().toString() + "\npath=" + gFile.getPath());
-                        } else {
-                            set_cam_hint(tw.getText().toString() + "\nsame name file exist,path not create");
-                        }
+                        set_cam_hint(tw.getText().toString() + "\nsame name file exist,path not create");
                     }
                 }
+
             }
+
+            if (et.getText().toString().isEmpty()) {
+                et.setText("0");
+            }
+            mTmrIntev = Integer.parseInt(et.getText().toString());
+
         }
         else{
             filename.setEnabled(true);
+            et.setEnabled(true);
         }
 
+    }
+
+    @Override
+    protected void onDestroy(){
+        if(mTmr!=null) {
+            mTmr.cancel();
+        }
+        super.onDestroy();
     }
 
 }
