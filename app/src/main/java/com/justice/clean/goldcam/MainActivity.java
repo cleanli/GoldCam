@@ -55,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
     private File mFile, gFile;
     private String globleFilename;
     private int piccount = 0;
+    private int last_index = 0;
 
     private String mTWstring;
 
@@ -166,6 +167,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void on_sur_clk(View v){
         if(oldcam != null && mIsPreviewing){
+            set_cam_hint("start focus ...");
             oldcam.autoFocus(myAutoFocusCallback);
         }
     }
@@ -201,6 +203,7 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 mylog("focus callback, success = " + success);
             }
+            set_cam_hint("focus success = " + success);
         }
     };
 
@@ -367,6 +370,8 @@ public class MainActivity extends AppCompatActivity {
             //sfv.setBottom(sfv.getTop()+sfv.getWidth()*4/3);
             //sfv.setTop(300);
             oldcam.autoFocus(myAutoFocusCallback);
+
+            onset(true);
         }catch (IOException e){
             oldcam.release();
             oldcam=null;
@@ -376,6 +381,7 @@ public class MainActivity extends AppCompatActivity {
         oldcam.stopPreview();
         set_cam_hint("old camera preview stopped");
         mIsPreviewing = false;
+        onset(false);
     }
     private void closeOldCamera(){
         oldcam.release();
@@ -384,5 +390,59 @@ public class MainActivity extends AppCompatActivity {
         mIsOpened = false;
     }
 
+    public void onset(boolean b){
+        if(b) {
+            filename.setEnabled(false);
+            globleFilename = filename.getText().toString();
+            if(globleFilename == null || globleFilename.isEmpty()){
+                globleFilename = "default";
+            }
+            int index = sp.getSelectedItemPosition();
+            Camera.Parameters P = oldcam.getParameters();
+            mylog("last index & index is " + last_index + " & " + index);
+            /*
+            if (last_index == index &&
+                    gFile.getPath().equals(this.getExternalFilesDir(null) + "/" + filename.getText().toString())) {
+                P.set("rotation", pic_rotate);
+                tw.setText("set rotate " + pic_rotate);
+                pic_rotate += 90;
+                if (pic_rotate == 360) {
+                    pic_rotate = 0;
+                }
+            }
+            */
+            Camera.Size tmpSz = P.getPictureSize();
+            mylog("orignal size is " + tmpSz.width + "x" + tmpSz.height);
+            P.setPictureSize(mPicSizes.get(index).width, mPicSizes.get(index).height);
+            Camera.Size tmpSz2 = P.getPictureSize();
+            mylog("current size is " + tmpSz2.width + "x" + tmpSz2.height);
+            oldcam.setParameters(P);
+            set_cam_hint(tw.getText().toString() + "\nsize change from " + tmpSz.width + "x" + tmpSz.height
+                    + " to " + tmpSz2.width + "x" + tmpSz2.height);
+            last_index = index;
+
+            if (!gFile.getPath().equals(this.getExternalFilesDir(null) + "/" + filename.getText().toString())) {
+                if (!filename.getText().toString().isEmpty() && filename.getText().toString() != null) {
+                    File t_gFile = new File(this.getExternalFilesDir(null) + "/" + filename.getText().toString());
+                    if (!t_gFile.exists()) {
+                        t_gFile.mkdirs();
+                        gFile = t_gFile;
+                        set_cam_hint(tw.getText().toString() + "\npath=" + gFile.getPath());
+                    } else {
+                        if (t_gFile.isDirectory()) {
+                            gFile = t_gFile;
+                            set_cam_hint(tw.getText().toString() + "\npath=" + gFile.getPath());
+                        } else {
+                            set_cam_hint(tw.getText().toString() + "\nsame name file exist,path not create");
+                        }
+                    }
+                }
+            }
+        }
+        else{
+            filename.setEnabled(true);
+        }
+
+    }
 
 }
