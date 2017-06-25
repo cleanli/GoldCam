@@ -82,11 +82,17 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    private void set_cam_hint(String l)
+    {
+        tw.setVisibility(View.VISIBLE);
+        tw.setText(l);
+    }
+
     public boolean checkpm(){
         if(Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
             if (!hasPermissionsGranted(NEEDED_PERMISSIONS)) {
                 mylog("no permission, quit");
-                tw.setText("no permission, open camera failed");
+                set_cam_hint("no permission, open camera failed");
                 return false;
             } else {
                 mylog("permision granted, continue");
@@ -105,6 +111,10 @@ public class MainActivity extends AppCompatActivity {
                 .setNeutralButton("No need", PicDivideListener)
                 .show();
                 */
+    }
+
+    public void on_hint_clk(View v){
+        tw.setVisibility(View.INVISIBLE);
     }
 
     public void onButClk(View v){
@@ -175,7 +185,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         oldcam = Camera.open(camID);
-        tw.setText("old camera opened");
+        set_cam_hint("old camera opened");
         mIsOpened = true;
 
         Camera.Parameters p = oldcam.getParameters();
@@ -196,10 +206,10 @@ public class MainActivity extends AppCompatActivity {
         if(rt4_3_h > sfv.getHeight()){
             int tmp = sfv.getHeight()/4*3;
             sfv.setRight(sfv.getLeft()+tmp);
-            tw.setText("\nadjust right to "+sfv.getRight());
+            set_cam_hint("\nadjust right to "+sfv.getRight());
         }
         else{
-            tw.setText("\nno need to adjust view");
+            set_cam_hint("\nno need to adjust view");
         }
         */
 
@@ -216,7 +226,7 @@ public class MainActivity extends AppCompatActivity {
             mPreSize = p.getPreviewSize();
             adjust_sur();
             oldcam.startPreview();
-            tw.setText(tw.getText().toString()+"\nold camera preview started");
+            set_cam_hint(tw.getText().toString()+"\nold camera preview started");
             mIsPreviewing = true;
             //sfv.setBottom(sfv.getTop()+sfv.getWidth()*4/3);
             //sfv.setTop(300);
@@ -227,13 +237,13 @@ public class MainActivity extends AppCompatActivity {
     }
     private void stopOldPreview(){
         oldcam.stopPreview();
-        tw.setText("old camera preview stopped");
+        set_cam_hint("old camera preview stopped");
         mIsPreviewing = false;
     }
     private void closeOldCamera(){
         oldcam.release();
         oldcam=null;
-        tw.setText("old camera closed");
+        set_cam_hint("old camera closed");
         mIsOpened = false;
     }
 

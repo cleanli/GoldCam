@@ -36,6 +36,7 @@
         android:layout_marginRight="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
+        android:onClick="on_hint_clk"
         android:text="Hello World!"
         android:textColor="@android:color/holo_orange_light"
         app:layout_constraintBottom_toBottomOf="parent"
