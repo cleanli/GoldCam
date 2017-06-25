@@ -54,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
     private String PicSizesString[];
 
     private int camID = 0;
+    private int last_camID = -1;
     private int pic_cut_index = 0;
     private boolean IsExtraMode = false;
     private String ExtraFilePath = null;
@@ -392,9 +393,12 @@ public class MainActivity extends AppCompatActivity {
             PicSizesString[i++] = ""+tsz.width+"x"+tsz.height;
         }
         //mPicSizes.toArray(PicSizesString);
-        ArrayAdapter<String> tmpAd = new ArrayAdapter<String>(this,android.R.layout.simple_spinner_item, PicSizesString);
-        tmpAd.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        sp.setAdapter(tmpAd);
+        if(last_camID != camID) {
+            ArrayAdapter<String> tmpAd = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, PicSizesString);
+            tmpAd.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            sp.setAdapter(tmpAd);
+            last_camID = camID;
+        }
 
         /*
         int rt4_3_h = sfv.getWidth()/3*4;
@@ -524,11 +528,13 @@ public class MainActivity extends AppCompatActivity {
             if(max_piccount == 0){
                 max_piccount = 99999999;
             }
+            sp.setEnabled(false);
         }
         else{
             filename.setEnabled(true);
             et.setEnabled(true);
             max_ct.setEnabled(true);
+            sp.setEnabled(true);
         }
 
     }
