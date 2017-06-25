@@ -41,6 +41,8 @@ public class MainActivity extends AppCompatActivity {
     private boolean mIsFocused = false;
     private String PicSizesString[];
 
+    private int camID = 0;
+
     private static final String[] NEEDED_PERMISSIONS = {
             Manifest.permission.CAMERA,
             Manifest.permission.RECORD_AUDIO,
@@ -113,6 +115,18 @@ public class MainActivity extends AppCompatActivity {
                 */
     }
 
+    public void on_cam_clk(View v){
+
+        if(Camera.getNumberOfCameras() == 0){
+            return;
+        }
+        camID ++;
+        if(camID >= Camera.getNumberOfCameras()){
+            camID = 0;
+        }
+        restart_cam();
+    }
+
     public void on_hint_clk(View v){
         tw.setVisibility(View.INVISIBLE);
     }
@@ -163,18 +177,8 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
             mylog("surfacechanged mIsopened " + mIsOpened);
-            if(mIsOpened) {
-                stopOldPreview();
-                closeOldCamera();
-                ocbt.setText("Open");
-            }
-            if(!mIsOpened) {
-                if (!checkpm())
-                    return;
-                openOldCamera();
-                startOldPreview();
-                ocbt.setText("Close");
-            }
+            restart_cam();
+
         }
 
         @Override
@@ -200,13 +204,27 @@ public class MainActivity extends AppCompatActivity {
         sfv.setLayoutParams(new FrameLayout.LayoutParams(480, 640));//
     }
 
+    private void restart_cam(){
+        if(mIsOpened) {
+            stopOldPreview();
+            closeOldCamera();
+            ocbt.setText("Open");
+        }
+        if(!mIsOpened) {
+            if (!checkpm())
+                return;
+            openOldCamera();
+            startOldPreview();
+            ocbt.setText("Close");
+        }
+    }
 
     private void openOldCamera(){
-        int camID = 0;
 
         sh.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-        if(Camera.getNumberOfCameras()>1){
-            camID = 0;
+        if(Camera.getNumberOfCameras() == 0){
+            mylog("Number of cameras is 0");
+            return;
         }
 
         oldcam = Camera.open(camID);
