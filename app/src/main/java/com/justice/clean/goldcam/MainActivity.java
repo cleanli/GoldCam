@@ -27,7 +27,7 @@ import static android.support.v7.appcompat.R.attr.height;
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "GOLDCAM";
-    private Camera oldcam;
+    private Camera oldcam = null;
     private SurfaceView sfv;
     private SurfaceHolder sh;
     private TextView tw;
@@ -117,6 +117,12 @@ public class MainActivity extends AppCompatActivity {
         tw.setVisibility(View.INVISIBLE);
     }
 
+    public void on_sur_clk(View v){
+        if(oldcam != null && mIsPreviewing){
+            oldcam.autoFocus(myAutoFocusCallback);
+        }
+    }
+
     public void onButClk(View v){
         Log.d(TAG, "click button");
         if(mIsOpened){
@@ -134,10 +140,34 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private Camera.AutoFocusCallback myAutoFocusCallback = new Camera.AutoFocusCallback() {
+
+        public void onAutoFocus(boolean success, Camera camera) {
+            // TODO Auto-generated method stub
+            if (success)
+            {
+                mylog("focus callback, success = " + success);
+            } else {
+                mylog("focus callback, success = " + success);
+            }
+        }
+    };
+
     private SurfaceHolder.Callback shCB = new SurfaceHolder.Callback() {
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
             mylog("surfacecreated mIsopened " + mIsOpened);
+
+        }
+
+        @Override
+        public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+            mylog("surfacechanged mIsopened " + mIsOpened);
+            if(mIsOpened) {
+                stopOldPreview();
+                closeOldCamera();
+                ocbt.setText("Open");
+            }
             if(!mIsOpened) {
                 if (!checkpm())
                     return;
@@ -148,17 +178,12 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-
-        }
-
-        @Override
         public void surfaceDestroyed(SurfaceHolder holder) {
             mylog("surfacedestroyed mIsopened " + mIsOpened);
             if(mIsOpened) {
                 stopOldPreview();
                 closeOldCamera();
-                ocbt.setText("Open");
+                //ocbt.setText("Open");
             }
         }
     };
@@ -230,6 +255,7 @@ public class MainActivity extends AppCompatActivity {
             mIsPreviewing = true;
             //sfv.setBottom(sfv.getTop()+sfv.getWidth()*4/3);
             //sfv.setTop(300);
+            oldcam.autoFocus(myAutoFocusCallback);
         }catch (IOException e){
             oldcam.release();
             oldcam=null;
