@@ -351,10 +351,14 @@ public class MainActivity extends AppCompatActivity {
         if(optimalSize.height * av_w /optimalSize.width < av_h){
             sfv.setLayoutParams(new FrameLayout.LayoutParams(optimalSize.height * av_w /optimalSize.width, av_w));
             mylog("go 1");
+            set_cam_hint(tw.getText().toString() +
+                    "\nsur go 1 "+(optimalSize.height * av_w /optimalSize.width) + " x " + av_w);
         }
         else {
             sfv.setLayoutParams(new FrameLayout.LayoutParams(av_h, optimalSize.width * av_h / optimalSize.height));
             mylog("go 2");
+            set_cam_hint(tw.getText().toString() +
+                    "\nsur go 2 "+ av_h + " x "+(optimalSize.width * av_h / optimalSize.height));
         }
         mPreSize = optimalSize;
     }
@@ -521,7 +525,8 @@ public class MainActivity extends AppCompatActivity {
             p.setPreviewSize(mPreSize.width, mPreSize.height);
             oldcam.setParameters(p);
             oldcam.startPreview();
-            set_cam_hint(tw.getText().toString()+"\nold camera preview started");
+            set_cam_hint(tw.getText().toString()+"\nold camera preview started, "
+                    +mPreSize.width + " x " + mPreSize.height);
             p = oldcam.getParameters();
             p.setPictureSize(mPicSize.width, mPicSize.height);
             oldcam.setParameters(p);
