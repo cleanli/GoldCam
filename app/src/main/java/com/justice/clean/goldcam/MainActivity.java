@@ -32,10 +32,16 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import static android.support.v7.appcompat.R.attr.height;
+import static android.support.v7.appcompat.R.attr.switchMinWidth;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "GOLDCAM";
+    private static final int PIC_MODE = 0;
+    private static final int VID_MODE = 1;
+    private static final int MAX_MODE = 2;
+    private int oper_mode = PIC_MODE;
+    private int last_mode = MAX_MODE;
     private Camera oldcam = null;
     private SurfaceView sfv;
     private SurfaceHolder sh;
@@ -50,9 +56,11 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayout ll2;
     private List<Camera.Size> mPicSizes;
     private List<Camera.Size> mPreSizes;
+    private List<Camera.Size> mVidSizes;
     private Camera.Size mPreSize;
     private Camera.Size mPicSize;
-    private boolean mIsRecordingVideo;
+    private Camera.Size mVidSize;
+    private boolean mIsRecordingVideo = false;
     private boolean mIsOpened = false;
     private boolean mIsPreviewing = false;
     private boolean mIsFocused = false;
@@ -88,7 +96,15 @@ public class MainActivity extends AppCompatActivity {
     private Handler mHder = new Handler(){
         @Override
         public void handleMessage(Message msg){
-            set_cam_hint(mTWstring);
+            mylog("arg1 "+msg.arg1);
+            switch(msg.arg1){
+                case 1:
+                    set_cam_hint(mTWstring);
+                    break;
+                case 2:
+                    trigger.setText(mTWstring);
+                    break;
+            }
         }
     };
 
@@ -174,6 +190,22 @@ public class MainActivity extends AppCompatActivity {
                 */
     }
 
+    public void onModeClk(View v){
+        oper_mode++;
+        if(oper_mode == MAX_MODE){
+            oper_mode = 0;
+        }
+        switch(oper_mode){
+            case PIC_MODE:
+                trigger.setText("PIC");
+                break;
+            case VID_MODE:
+                trigger.setText("REC");
+                break;
+        }
+        restart_cam();
+    }
+
     public void on_cam_clk(View v){
 
         if(Camera.getNumberOfCameras() == 0){
@@ -197,8 +229,55 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void do_trigger(){
+        switch(oper_mode){
+            case PIC_MODE:
+                take_pic();
+                break;
+            case VID_MODE:
+                mylog("do recording");
+                if(mIsRecordingVideo){
+                    stop_rec();
+                    trigger.setText("REC");
+                }
+                else{
+                    start_rec();
+                    trigger.setText("REC---");
+                }
+                break;
+        }
+    }
+    private void do_conti_trigger(){
+        switch(oper_mode){
+            case PIC_MODE:
+                take_pic();
+                //update_trigger("PIC...");
+                break;
+            case VID_MODE:
+                mylog("do recording");
+                if(mIsRecordingVideo){
+                    stop_rec();
+                }
+                start_rec();
+                //update_trigger("REC...");
+                break;
+        }
+    }
+    private void do_end_trigger(){
+        switch(oper_mode){
+            case PIC_MODE:
+                trigger.setText("PIC");
+                break;
+            case VID_MODE:
+                if(mIsRecordingVideo){
+                    stop_rec();
+                }
+                trigger.setText("REC...");
+                break;
+        }
+    }
     public void onTriggerClk(View v){
-        Log.d(TAG, "pic click button");
+        Log.d(TAG, "trigger click button");
         if(!mIsPreviewing){
             set_cam_hint("open camera first");
             return;
@@ -223,21 +302,30 @@ public class MainActivity extends AppCompatActivity {
 
                         }
                         mylog("from timer--------------------------------------------------");
-                        take_pic();
+                        do_conti_trigger();
                     }
                 }, 0, mTmrIntev * 1000);
                 mTmrIsrunning = true;
-                trigger.setText("PIC...");
+                switch(oper_mode){
+                    case PIC_MODE:
+                        trigger.setText("PIC...");
+                        break;
+                    case VID_MODE:
+                        trigger.setText("REC...");
+                        break;
+                }
+
                 set_cam_hint("timer is running @ " + mTmrIntev);
             } else {
                 mTmr.cancel();
                 set_cam_hint("timer canceled");
                 mTmrIsrunning = false;
-                trigger.setText("PIC");
+
+                do_end_trigger();
             }
         } else {
             //runPrecaptureSequence();
-            take_pic();
+            do_trigger();
         }
     }
 
@@ -300,10 +388,20 @@ public class MainActivity extends AppCompatActivity {
 
     private void adjust_sur(){
         final double ASPECT_TOLERANCE = 0.1;
-        double targetRatio = (double) mPicSize.width / mPicSize.height;
+        Camera.Size TSz;
+        switch(oper_mode){
+            default:
+            case PIC_MODE:
+                TSz = mPicSize;
+                break;
+            case VID_MODE:
+                TSz = mVidSize;
+                break;
+        }
+        double targetRatio = (double) TSz.width / TSz.height;
         int av_w, av_h;
         mylog("target ratio "+targetRatio);
-        mylog("mPicSize.width / mPicSize.height " + mPicSize.width + " " + mPicSize.height);
+        mylog("TSz.width / TSz.height " + TSz.width + " " + TSz.height);
         mylog("original surface w x h is " + org_sur_w + " x " + org_sur_h);
         //mylog("preview size is w "  + mPreSize.width + " h "+ mPreSize.height);
         mylog("sur size is w "  + sfv.getWidth() + " h "+ sfv.getHeight());
@@ -414,8 +512,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     void updateHint(String sc){
+        Message msg = new Message();
         mTWstring = sc;
-        mHder.sendMessage(new Message());
+        msg.arg1 = 1;
+        mHder.sendMessage(msg);
+    }
+
+    void update_trigger(String sc){
+        Message msg = new Message();
+        mTWstring = sc;
+        msg.arg1 = 2;
+        mHder.sendMessage(msg);
     }
 
 
@@ -472,6 +579,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void start_rec(){
+        mIsRecordingVideo = true;
+    }
+
+    private void stop_rec(){
+        mIsRecordingVideo = false;
+    }
+
     private void openOldCamera(){
 
         sh.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
@@ -487,18 +602,32 @@ public class MainActivity extends AppCompatActivity {
         Camera.Parameters p = oldcam.getParameters();
         mPicSizes = p.getSupportedPictureSizes();
         mPreSizes = p.getSupportedPreviewSizes();
-
-        PicSizesString = new String[mPicSizes.size()];
+        mVidSizes = p.getSupportedVideoSizes();
         int i = 0;
-        for(Camera.Size tsz:mPicSizes){
-            PicSizesString[i++] = ""+tsz.width+"x"+tsz.height;
+        switch(oper_mode){
+            case PIC_MODE:
+                PicSizesString = new String[mPicSizes.size()];
+                i = 0;
+                for(Camera.Size tsz:mPicSizes){
+                    PicSizesString[i++] = ""+tsz.width+"x"+tsz.height;
+                }
+                break;
+            case VID_MODE:
+                PicSizesString = new String[mVidSizes.size()];
+                i = 0;
+                for(Camera.Size tsz:mVidSizes){
+                    PicSizesString[i++] = ""+tsz.width+"x"+tsz.height;
+                }
+                break;
         }
+
         //mPicSizes.toArray(PicSizesString);
-        if(last_camID != camID) {
+        if(last_camID != camID || last_mode != oper_mode) {
             ArrayAdapter<String> tmpAd = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, PicSizesString);
             tmpAd.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             sp.setAdapter(tmpAd);
             last_camID = camID;
+            last_mode = oper_mode;
         }
 
         /*
@@ -581,16 +710,30 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
             */
-            Camera.Size tmpSz = P.getPictureSize();
-            mylog("orignal size is " + tmpSz.width + "x" + tmpSz.height);
-            P.setPictureSize(mPicSizes.get(index).width, mPicSizes.get(index).height);
-            Camera.Size tmpSz2 = P.getPictureSize();
-            mPicSize = tmpSz2;
-            mylog("current size is " + tmpSz2.width + "x" + tmpSz2.height);
-            oldcam.setParameters(P);
-            set_cam_hint(tw.getText().toString() + "\nsize change from " + tmpSz.width + "x" + tmpSz.height
-                    + " to " + tmpSz2.width + "x" + tmpSz2.height);
-            last_index = index;
+            switch (oper_mode){
+                case PIC_MODE: {
+                    Camera.Size tmpSz = P.getPictureSize();
+                    mylog("orignal size is " + tmpSz.width + "x" + tmpSz.height);
+                    P.setPictureSize(mPicSizes.get(index).width, mPicSizes.get(index).height);
+                    Camera.Size tmpSz2 = P.getPictureSize();
+                    mPicSize = tmpSz2;
+                    mylog("current size is " + tmpSz2.width + "x" + tmpSz2.height);
+                    oldcam.setParameters(P);
+                    set_cam_hint(tw.getText().toString() + "\nsize change from " + tmpSz.width + "x" + tmpSz.height
+                            + " to " + tmpSz2.width + "x" + tmpSz2.height);
+                    last_index = index;
+                    break;
+                }
+                case VID_MODE: {
+                    mVidSize = mVidSizes.get(index);
+                    Camera.Size tmpSz2 = mVidSize;
+                    set_cam_hint(tw.getText().toString() + "\nvideo size "
+                            + tmpSz2.width + "x" + tmpSz2.height);
+                    last_index = index;
+                    break;
+                }
+            }
+
 
             if (!gFile.getPath().equals(this.getExternalFilesDir(null) + "/" + filename.getText().toString())) {
                 String tmp_str = filename.getText().toString();
