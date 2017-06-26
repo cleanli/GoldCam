@@ -302,6 +302,7 @@ public class MainActivity extends AppCompatActivity {
         final double ASPECT_TOLERANCE = 0.1;
         double targetRatio = (double) mPicSize.width / mPicSize.height;
         int av_w, av_h;
+        mylog("target ratio "+targetRatio);
         mylog("mPicSize.width / mPicSize.height " + mPicSize.width + " " + mPicSize.height);
         mylog("original surface w x h is " + org_sur_w + " x " + org_sur_h);
         //mylog("preview size is w "  + mPreSize.width + " h "+ mPreSize.height);
@@ -309,28 +310,51 @@ public class MainActivity extends AppCompatActivity {
         mylog("sur r " + sfv.getRight() + " l "+ sfv.getLeft() +
         " b "+ sfv.getBottom() + " t " + sfv.getTop());
 
-        av_w = org_sur_w;
-        av_h = org_sur_h - ll1.getHeight() - ll2.getHeight();
+        mylog("ll1 ll2 "+ ll1.getHeight() + " " + ll2.getHeight());
+        //av_h is w, av_w is h
+        av_h = org_sur_w;
+        av_w = org_sur_h - ll1.getHeight() - ll2.getHeight();
+        mylog("av "+av_w + " av_h "+av_h);
+
         //sfv.setRight(sfv.getLeft()+mPreSize.height);
         //sfv.setBottom(sfv.getTop()+mPreSize.width);
-        Camera.Size optimalSize = mPreSizes.get(0);
-        double lessratio = (double)optimalSize.width/optimalSize.height -targetRatio;
+        Camera.Size optimalSize = null;
+        double minDiff = Double.MAX_VALUE;
         for (Camera.Size trysize : mPreSizes) {
             mylog("for : try w x h " + trysize.width + " x " + trysize.height);
-            //if(trysize.width > av_w || trysize.height > av_h) continue;
             double ratio = (double) trysize.width / trysize.height;
-            if (Math.abs(ratio - targetRatio) < lessratio){
-                mylog("lessratio " + lessratio);
-                lessratio = Math.abs(ratio - targetRatio);
+            if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE) continue;
+            mylog("ratio meet~~~");
+            if (Math.abs(trysize.height - av_h) < minDiff) {
                 optimalSize = trysize;
+                minDiff = Math.abs(trysize.height - av_h);
+                mylog("new min diff "+ minDiff);
+            }
+        }
+        if(optimalSize == null) {//if can't find, find the nearest ratio
+            optimalSize = mPreSizes.get(0);
+            double lessratio = (double) optimalSize.width / optimalSize.height - targetRatio;
+            for (Camera.Size trysize : mPreSizes) {
+                mylog("for : try w x h " + trysize.width + " x " + trysize.height);
+                //if(trysize.width > av_w || trysize.height > av_h) continue;optimalSize.height * av_w /optimalSize.width
+                double ratio = (double) trysize.width / trysize.height;
+                if (Math.abs(ratio - targetRatio) < lessratio) {
+                    lessratio = Math.abs(ratio - targetRatio);
+                    optimalSize = trysize;
+                    mylog("new lessratio " + lessratio);
+                }
             }
         }
         mylog("final pre size w x h " + optimalSize.width + " x " + optimalSize.height);
+        mylog("1 "+(optimalSize.height * av_w /optimalSize.width) + " x " + av_w);
+        mylog("2 "+ av_h + " x "+(optimalSize.width * av_h / optimalSize.height));
         if(optimalSize.height * av_w /optimalSize.width < av_h){
             sfv.setLayoutParams(new FrameLayout.LayoutParams(optimalSize.height * av_w /optimalSize.width, av_w));
+            mylog("go 1");
         }
         else {
             sfv.setLayoutParams(new FrameLayout.LayoutParams(av_h, optimalSize.width * av_h / optimalSize.height));
+            mylog("go 2");
         }
         mPreSize = optimalSize;
     }
