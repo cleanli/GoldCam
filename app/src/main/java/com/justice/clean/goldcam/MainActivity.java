@@ -628,9 +628,14 @@ public class MainActivity extends AppCompatActivity {
         }catch (Exception e){
             e.printStackTrace();
         }
-        mMediaRecorder.start();
-        tw.setText(tw.getText().toString() + "\nold video started");
-        mIsRecordingVideo = true;
+        try {
+            mMediaRecorder.start();
+            tw.setText(tw.getText().toString() + "\nold video started");
+            mIsRecordingVideo = true;
+        }catch (Exception e){
+            e.printStackTrace();
+            tw.setText("start video ERROR, please restart APP");
+        }
     }
 
     private void stop_rec(){
