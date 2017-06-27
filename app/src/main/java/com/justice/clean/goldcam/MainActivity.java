@@ -17,6 +17,7 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -126,6 +127,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
+                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_main);
         //setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_NOSENSOR);
@@ -691,6 +694,7 @@ public class MainActivity extends AppCompatActivity {
             last_mode = oper_mode;
         }
         onset(true);
+        trigger.setEnabled(true);
 
         /*
         int rt4_3_h = sfv.getWidth()/3*4;
@@ -749,6 +753,7 @@ public class MainActivity extends AppCompatActivity {
         set_cam_hint("old camera closed");
         mIsOpened = false;
         onset(false);
+        trigger.setEnabled(false);
     }
 
     public void onset(boolean b){
