@@ -712,9 +712,11 @@ public class MainActivity extends AppCompatActivity {
             oldcam.startPreview();
             set_cam_hint(tw.getText().toString()+"\nold camera preview started, "
                     +mPreSize.width + " x " + mPreSize.height);
-            p = oldcam.getParameters();
-            p.setPictureSize(mPicSize.width, mPicSize.height);
-            oldcam.setParameters(p);
+            if(oper_mode == PIC_MODE) {
+                p = oldcam.getParameters();
+                p.setPictureSize(mPicSize.width, mPicSize.height);
+                oldcam.setParameters(p);
+            }
             mIsPreviewing = true;
             //sfv.setBottom(sfv.getTop()+sfv.getWidth()*4/3);
             //sfv.setTop(300);
