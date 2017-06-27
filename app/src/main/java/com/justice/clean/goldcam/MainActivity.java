@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
+import android.media.MediaRecorder;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
@@ -87,6 +88,8 @@ public class MainActivity extends AppCompatActivity {
     private int pre_w;
     private int pre_h;
 
+    private MediaRecorder mMediaRecorder;
+
     private static final String[] NEEDED_PERMISSIONS = {
             Manifest.permission.CAMERA,
             Manifest.permission.RECORD_AUDIO,
@@ -103,6 +106,12 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 case 2:
                     trigger.setText(mTWstring);
+                    break;
+                case 3:
+                    start_rec();
+                    break;
+                case 4:
+                    stop_rec();
                     break;
             }
         }
@@ -256,9 +265,9 @@ public class MainActivity extends AppCompatActivity {
             case VID_MODE:
                 mylog("do recording");
                 if(mIsRecordingVideo){
-                    stop_rec();
+                    call_rec(false);
                 }
-                start_rec();
+                call_rec(true);
                 //update_trigger("REC...");
                 break;
         }
@@ -278,7 +287,7 @@ public class MainActivity extends AppCompatActivity {
     }
     public void onTriggerClk(View v){
         Log.d(TAG, "trigger click button");
-        if(!mIsPreviewing){
+        if(!mIsPreviewing && !mIsRecordingVideo){
             set_cam_hint("open camera first");
             return;
         }
@@ -525,6 +534,18 @@ public class MainActivity extends AppCompatActivity {
         mHder.sendMessage(msg);
     }
 
+    void call_rec(boolean s){
+        Message msg = new Message();
+        if(s) {
+            msg.arg1 = 3;
+        }
+        else
+        {
+            msg.arg1 = 4;
+        }
+        mHder.sendMessage(msg);
+    }
+
 
     class SavePictureTask extends AsyncTask<byte[], String, String> {
         @Override
@@ -580,10 +601,44 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void start_rec(){
+        if(mIsPreviewing){
+            stopOldPreview();
+            //closeOldCamera();
+        }
+        mMediaRecorder = new MediaRecorder();
+        mMediaRecorder.reset();
+        oldcam.unlock();
+        mMediaRecorder.setCamera(oldcam);
+        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+        mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+        mFile = new File(gFile, globleFilename + piccount + ".mp4");
+        mMediaRecorder.setOutputFile(mFile.getPath());
+        mMediaRecorder.setVideoEncodingBitRate(10000000);
+        mMediaRecorder.setVideoFrameRate(30);
+        mMediaRecorder.setVideoSize(mVidSize.width, mVidSize.height);
+        mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
+        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+        mMediaRecorder.setPreviewDisplay(sh.getSurface());
+        //int rotation = getWindowManager().getDefaultDisplay().getRotation();
+        mMediaRecorder.setOrientationHint(90);
+        try {
+            mMediaRecorder.prepare();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        mMediaRecorder.start();
+        tw.setText("old video started");
         mIsRecordingVideo = true;
     }
 
     private void stop_rec(){
+        mMediaRecorder.stop();
+        mMediaRecorder.release();
+        oldcam.lock();
+        //openOldCamera();
+        startOldPreview();
+
         mIsRecordingVideo = false;
     }
 
