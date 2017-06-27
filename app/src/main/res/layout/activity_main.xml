@@ -41,6 +41,7 @@
         android:paddingLeft="8dp"
         android:text="Hello World!"
         android:textColor="@android:color/holo_orange_light"
+        android:textSize="8sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintLeft_toLeftOf="parent"
