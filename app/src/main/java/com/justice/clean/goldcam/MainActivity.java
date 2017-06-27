@@ -281,7 +281,7 @@ public class MainActivity extends AppCompatActivity {
                 if(mIsRecordingVideo){
                     stop_rec();
                 }
-                trigger.setText("REC...");
+                trigger.setText("REC");
                 break;
         }
     }
@@ -612,8 +612,9 @@ public class MainActivity extends AppCompatActivity {
         mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
         mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-        mFile = new File(gFile, globleFilename + piccount + ".mp4");
+        mFile = new File(gFile, globleFilename + piccount++ + ".mp4");
         mMediaRecorder.setOutputFile(mFile.getPath());
+        tw.setText("Video File: "+ mFile.getPath());
         mMediaRecorder.setVideoEncodingBitRate(10000000);
         mMediaRecorder.setVideoFrameRate(30);
         mMediaRecorder.setVideoSize(mVidSize.width, mVidSize.height);
@@ -628,7 +629,7 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         mMediaRecorder.start();
-        tw.setText("old video started");
+        tw.setText(tw.getText().toString() + "\nold video started");
         mIsRecordingVideo = true;
     }
 
@@ -638,7 +639,7 @@ public class MainActivity extends AppCompatActivity {
         oldcam.lock();
         //openOldCamera();
         startOldPreview();
-
+        tw.setText("Video stopped");
         mIsRecordingVideo = false;
     }
 
@@ -725,17 +726,18 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     private void stopOldPreview(){
-        if(mTmrIsrunning){
-            mTmr.cancel();
-            set_cam_hint("timer canceled");
-            mTmrIsrunning = false;
-        }
         oldcam.stopPreview();
         set_cam_hint("old camera preview stopped");
         mIsPreviewing = false;
         onset(false);
     }
     private void closeOldCamera(){
+        if(mTmrIsrunning){
+            mTmr.cancel();
+            set_cam_hint("timer canceled");
+            mylog("timer cancelled in stopoldpreview");
+            mTmrIsrunning = false;
+        }
         oldcam.release();
         oldcam=null;
         set_cam_hint("old camera closed");
