@@ -685,6 +685,7 @@ public class MainActivity extends AppCompatActivity {
             last_camID = camID;
             last_mode = oper_mode;
         }
+        onset(true);
 
         /*
         int rt4_3_h = sfv.getWidth()/3*4;
@@ -705,7 +706,6 @@ public class MainActivity extends AppCompatActivity {
             oldcam.setDisplayOrientation(90);
             Camera.Parameters p = oldcam.getParameters();
             mPicSizes = p.getSupportedPictureSizes();
-            onset(true);
             adjust_sur();
             p.setPreviewSize(mPreSize.width, mPreSize.height);
             oldcam.setParameters(p);
@@ -731,7 +731,6 @@ public class MainActivity extends AppCompatActivity {
         oldcam.stopPreview();
         set_cam_hint("old camera preview stopped");
         mIsPreviewing = false;
-        onset(false);
     }
     private void closeOldCamera(){
         if(mTmrIsrunning){
@@ -744,6 +743,7 @@ public class MainActivity extends AppCompatActivity {
         oldcam=null;
         set_cam_hint("old camera closed");
         mIsOpened = false;
+        onset(false);
     }
 
     public void onset(boolean b){
