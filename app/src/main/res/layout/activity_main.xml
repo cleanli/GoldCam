@@ -181,7 +181,8 @@
             android:layout_weight="0.8"
             android:ems="10"
             android:hint="inter"
-            android:inputType="number" />
+            android:inputType="number"
+            android:text="9" />
 
         <EditText
             android:id="@+id/editText2"
