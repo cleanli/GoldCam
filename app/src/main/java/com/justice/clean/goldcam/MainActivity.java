@@ -349,6 +349,14 @@ public class MainActivity extends AppCompatActivity {
             ocbt.setText("Open");
         }
         else{
+            switch(oper_mode){
+                case PIC_MODE:
+                    trigger.setText("PIC");
+                    break;
+                case VID_MODE:
+                    trigger.setText("REC");
+                    break;
+            }
             if(!checkpm())
                 return;
             openOldCamera();
