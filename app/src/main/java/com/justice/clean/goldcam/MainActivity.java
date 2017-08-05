@@ -51,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
     private Spinner sp;
     private Button ocbt;
     private Button trigger;
+    private Button mode_bt;
     private EditText filename;
     private EditText et;
     private EditText max_ct;
@@ -139,6 +140,7 @@ public class MainActivity extends AppCompatActivity {
         sp = (Spinner) findViewById(R.id.spinner);
         ocbt = (Button) findViewById(R.id.button);
         trigger = (Button) findViewById(R.id.trigger);
+        mode_bt = (Button) findViewById(R.id.button2);
         ocbt.setText("Open");
         sh = sfv.getHolder();
         //sh.setFixedSize(480,640);
@@ -287,6 +289,7 @@ public class MainActivity extends AppCompatActivity {
                 trigger.setText("REC");
                 break;
         }
+        mode_bt.setEnabled(true);
     }
     public void onTriggerClk(View v){
         Log.d(TAG, "trigger click button");
@@ -326,6 +329,7 @@ public class MainActivity extends AppCompatActivity {
                         trigger.setText("REC...");
                         break;
                 }
+                mode_bt.setEnabled(false);
 
                 set_cam_hint("timer is running @ " + mTmrIntev);
             } else {
@@ -357,6 +361,7 @@ public class MainActivity extends AppCompatActivity {
                     trigger.setText("REC");
                     break;
             }
+            mode_bt.setEnabled(true);
             if(!checkpm())
                 return;
             openOldCamera();
