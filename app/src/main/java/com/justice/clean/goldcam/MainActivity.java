@@ -90,6 +90,8 @@ public class MainActivity extends AppCompatActivity {
     private int org_sur_h;
     private int pre_w;
     private int pre_h;
+    private String pic_intv = "9";
+    private String rec_intv = "300";
 
     private MediaRecorder mMediaRecorder;
 
@@ -214,9 +216,11 @@ public class MainActivity extends AppCompatActivity {
         switch(oper_mode){
             case PIC_MODE:
                 trigger.setText("PIC");
+                et.setText(pic_intv);
                 break;
             case VID_MODE:
                 trigger.setText("REC");
+                et.setText(rec_intv);
                 break;
         }
         restart_cam();
@@ -283,6 +287,14 @@ public class MainActivity extends AppCompatActivity {
         if(starting){
             mode_bt.setEnabled(true);
             cam_bt.setEnabled(true);
+            switch(oper_mode){
+                case PIC_MODE:
+                    pic_intv = et.getText().toString();
+                    break;
+                case VID_MODE:
+                    rec_intv = et.getText().toString();
+                    break;
+            }
         }
         else{
             mode_bt.setEnabled(false);
