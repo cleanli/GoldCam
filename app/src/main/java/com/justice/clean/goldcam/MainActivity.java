@@ -424,7 +424,7 @@ public class MainActivity extends AppCompatActivity {
                 break;
         }
         double targetRatio = (double) TSz.width / TSz.height;
-        int av_w, av_h;
+        int av_w, av_h, sur_w, sur_h;
         mylog("target ratio "+targetRatio);
         mylog("TSz.width / TSz.height " + TSz.width + " " + TSz.height);
         mylog("original surface w x h is " + org_sur_w + " x " + org_sur_h);
@@ -472,17 +472,29 @@ public class MainActivity extends AppCompatActivity {
         mylog("1 "+(optimalSize.height * av_w /optimalSize.width) + " x " + av_w);
         mylog("2 "+ av_h + " x "+(optimalSize.width * av_h / optimalSize.height));
         if(optimalSize.height * av_w /optimalSize.width < av_h){
-            sfv.setLayoutParams(new FrameLayout.LayoutParams(optimalSize.height * av_w /optimalSize.width, av_w));
+            sur_w = optimalSize.height * av_w /optimalSize.width;
+            sur_h = av_w;
+            //sfv.setLayoutParams(new FrameLayout.LayoutParams(optimalSize.height * av_w /optimalSize.width, av_w));
             mylog("go 1");
-            set_cam_hint(tw.getText().toString() +
-                    "\nsur go 1 "+(optimalSize.height * av_w /optimalSize.width) + " x " + av_w);
+            //set_cam_hint(tw.getText().toString() +
+            //        "\nsur go 1 "+(optimalSize.height * av_w /optimalSize.width) + " x " + av_w);
         }
         else {
-            sfv.setLayoutParams(new FrameLayout.LayoutParams(av_h, optimalSize.width * av_h / optimalSize.height));
+            sur_w = av_h;
+            sur_h = optimalSize.width * av_h / optimalSize.height;
+            //sfv.setLayoutParams(new FrameLayout.LayoutParams(av_h, optimalSize.width * av_h / optimalSize.height));
             mylog("go 2");
-            set_cam_hint(tw.getText().toString() +
-                    "\nsur go 2 "+ av_h + " x "+(optimalSize.width * av_h / optimalSize.height));
+            //set_cam_hint(tw.getText().toString() +
+            //        "\nsur go 2 "+ av_h + " x "+(optimalSize.width * av_h / optimalSize.height));
         }
+        mylog("op wxh "+optimalSize.width+" "+optimalSize.height+" sur_wxh "+sur_w+" "+sur_h);
+        if(optimalSize.width < sur_h){
+            sur_h = optimalSize.width;
+            sur_w = optimalSize.height;
+        }
+        set_cam_hint(tw.getText().toString() +
+                "\nsur go "+ sur_h + " x "+ sur_w);
+        sfv.setLayoutParams(new FrameLayout.LayoutParams(sur_w, sur_h));
         mPreSize = optimalSize;
     }
 
