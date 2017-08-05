@@ -52,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
     private Button ocbt;
     private Button trigger;
     private Button mode_bt;
+    private Button cam_bt;
     private EditText filename;
     private EditText et;
     private EditText max_ct;
@@ -141,6 +142,7 @@ public class MainActivity extends AppCompatActivity {
         ocbt = (Button) findViewById(R.id.button);
         trigger = (Button) findViewById(R.id.trigger);
         mode_bt = (Button) findViewById(R.id.button2);
+        cam_bt = (Button) findViewById(R.id.button3);
         ocbt.setText("Open");
         sh = sfv.getHolder();
         //sh.setFixedSize(480,640);
@@ -277,6 +279,16 @@ public class MainActivity extends AppCompatActivity {
                 break;
         }
     }
+    private void working(boolean starting){
+        if(starting){
+            mode_bt.setEnabled(true);
+            cam_bt.setEnabled(true);
+        }
+        else{
+            mode_bt.setEnabled(false);
+            cam_bt.setEnabled(false);
+        }
+    }
     private void do_end_trigger(){
         switch(oper_mode){
             case PIC_MODE:
@@ -289,7 +301,7 @@ public class MainActivity extends AppCompatActivity {
                 trigger.setText("REC");
                 break;
         }
-        mode_bt.setEnabled(true);
+        working(true);
     }
     public void onTriggerClk(View v){
         Log.d(TAG, "trigger click button");
@@ -329,7 +341,7 @@ public class MainActivity extends AppCompatActivity {
                         trigger.setText("REC...");
                         break;
                 }
-                mode_bt.setEnabled(false);
+                working(false);
 
                 set_cam_hint("timer is running @ " + mTmrIntev);
             } else {
@@ -361,7 +373,7 @@ public class MainActivity extends AppCompatActivity {
                     trigger.setText("REC");
                     break;
             }
-            mode_bt.setEnabled(true);
+            working(true);
             if(!checkpm())
                 return;
             openOldCamera();
